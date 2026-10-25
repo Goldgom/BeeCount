@@ -28,12 +28,29 @@ class MainActivity: FlutterFragmentActivity() {
     private var screenshotObserver: ScreenshotObserver? = null
 
     override fun onCreate(savedInstanceState: android.os.Bundle?) {
+        // Pending PKCE exists only in the live Dart process; cold callbacks are stale.
+        // app_links 6.x logs full intents, so OAuth intents must never reach it.
+        if (intent?.data?.scheme == "beecount.oauth") {
+            setIntent(Intent(intent).setData(null))
+        }
         super.onCreate(savedInstanceState)
         handleNotificationIntent(intent)
         handleSharedImage(intent)
     }
 
     override fun onNewIntent(intent: Intent) {
+        if (intent.data?.scheme == "beecount.oauth") {
+            val callback = intent.data.toString()
+            flutterEngine?.dartExecutor?.binaryMessenger?.let { messenger ->
+                MethodChannel(messenger, "com.tntlikely.beecount/oauth")
+                    .invokeMethod("callback", callback)
+            }
+            // Do not forward usable authorization codes to app_links logging.
+            val sanitized = Intent(intent).setData(null)
+            super.onNewIntent(sanitized)
+            setIntent(sanitized)
+            return
+        }
         super.onNewIntent(intent)
         setIntent(intent) // 重要：更新当前intent
         handleNotificationIntent(intent)

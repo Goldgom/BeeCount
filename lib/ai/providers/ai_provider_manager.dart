@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'ai_provider_config.dart';
 import 'ai_constants.dart';
+import 'tokennest_auth_service.dart';
 import '../../services/system/logger_service.dart';
 
 /// AI 服务商管理服务
@@ -389,7 +390,8 @@ class AIProviderManager {
   /// 提示用户去 AI 设置页,避免 vision()/speechToText() 内部抛异常用户看不懂。
   static Future<bool> isCapabilityConfigured(AICapabilityType type) async {
     final provider = await getProviderForCapability(type);
-    return provider != null && provider.isValid;
+    return provider != null && provider.isValid &&
+        (!provider.isTokenNest || await TokenNestAuthService.instance.isSignedIn);
   }
 
   /// 迁移旧配置到新格式

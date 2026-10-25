@@ -54,7 +54,9 @@ class AIServiceProviderConfig {
       );
 
   /// 配置是否有效（至少有 API Key）
-  bool get isValid => apiKey.isNotEmpty;
+  bool get isTokenNest => id == 'tokennest_oauth';
+
+  bool get isValid => isTokenNest || apiKey.isNotEmpty;
 
   /// 是否支持文本对话
   bool get supportsText => textModel.isNotEmpty;
@@ -96,7 +98,7 @@ class AIServiceProviderConfig {
       id: json['id'] as String,
       name: json['name'] as String,
       isBuiltIn: json['isBuiltIn'] as bool? ?? false,
-      apiKey: json['apiKey'] as String? ?? '',
+      apiKey: json['id'] == 'tokennest_oauth' ? '' : json['apiKey'] as String? ?? '',
       baseUrl: json['baseUrl'] as String? ?? '',
       textModel: json['textModel'] as String? ?? '',
       visionModel: json['visionModel'] as String? ?? '',
@@ -113,7 +115,7 @@ class AIServiceProviderConfig {
       'id': id,
       'name': name,
       'isBuiltIn': isBuiltIn,
-      'apiKey': apiKey,
+      'apiKey': isTokenNest ? '' : apiKey,
       'baseUrl': baseUrl,
       'textModel': textModel,
       'visionModel': visionModel,

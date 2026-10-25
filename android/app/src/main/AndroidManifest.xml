@@ -37,6 +37,7 @@
         android:label="@string/app_name"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
+        android:allowBackup="false"
         android:requestLegacyExternalStorage="true">
         <!-- Only the system can bind; notification access must be granted explicitly by the user. -->
         <service
@@ -75,6 +76,13 @@
                 <action android:name="android.intent.action.SEND"/>
                 <category android:name="android.intent.category.DEFAULT"/>
                 <data android:mimeType="image/*"/>
+            </intent-filter>
+            <meta-data android:name="flutter_deeplinking_enabled" android:value="false" />
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="beecount.oauth" android:host="oauth" android:path="/callback"/>
             </intent-filter>
             <!-- URL Scheme: beecount:// -->
             <intent-filter>

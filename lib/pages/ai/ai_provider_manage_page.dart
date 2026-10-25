@@ -1,3 +1,5 @@
+import 'tokennest_settings_page.dart';
+import '../../ai/providers/tokennest_auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -52,6 +54,13 @@ class _AIProviderManagePageState extends ConsumerState<AIProviderManagePage> {
                 tooltip: l10n.aiProviderAdd,
               ),
             ],
+          ),
+          ListTile(
+            leading: const Icon(Icons.account_circle_outlined),
+            title: const Text('TokenNest 账号登录'),
+            subtitle: const Text('OAuth 授权 · 选择记账模型'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: _openTokenNest,
           ),
           Expanded(
             child: providersAsync.when(
@@ -111,7 +120,7 @@ class _AIProviderManagePageState extends ConsumerState<AIProviderManagePage> {
     return SectionCard(
       margin: EdgeInsets.zero,
       child: InkWell(
-        onTap: () => _editProvider(context, provider),
+        onTap: provider.isTokenNest ? _openTokenNest : () => _editProvider(context, provider),
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -266,6 +275,12 @@ class _AIProviderManagePageState extends ConsumerState<AIProviderManagePage> {
     );
   }
 
+  Future<void> _openTokenNest() async {
+    await Navigator.push<bool>(context,
+      MaterialPageRoute(builder: (_) => const TokenNestSettingsPage()));
+    if (mounted) ref.read(aiProviderListRefreshProvider.notifier).state++;
+  }
+
   Future<void> _addProvider(BuildContext context) async {
     final result = await Navigator.push<bool>(
       context,
@@ -316,7 +331,14 @@ class _AIProviderManagePageState extends ConsumerState<AIProviderManagePage> {
 
     if (confirmed == true && mounted) {
       final deletedMessage = l10n.aiProviderDeleted;
+      if (provider.isTokenNest) {
+        try { await TokenNestAuthService.instance.signOut(); }
+        on TokenNestAuthException catch (e) {
+          if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+        }
+      }
       final success = await AIProviderManager.deleteProvider(provider.id);
+      if (!context.mounted) return;
       if (success) {
         ref.read(aiProviderListRefreshProvider.notifier).state++;
         if (mounted) {

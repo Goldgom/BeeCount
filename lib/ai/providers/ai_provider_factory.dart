@@ -6,6 +6,7 @@ import 'package:flutter_ai_kit/flutter_ai_kit.dart';
 import 'package:flutter_ai_kit_zhipu/flutter_ai_kit_zhipu.dart';
 
 import 'ai_provider_config.dart';
+import 'tokennest_auth_service.dart';
 import 'ai_provider_manager.dart';
 import '../../services/system/logger_service.dart';
 
@@ -16,20 +17,17 @@ import '../../services/system/logger_service.dart';
 class AIProviderFactory {
   AIProviderFactory._();
 
-  static Dio? _dio;
-
-  /// 获取/创建 Dio 实例
-  static Dio _getDio(AIServiceProviderConfig config) {
-    _dio ??= Dio(BaseOptions(
+  /// Do not share mutable authorization headers across concurrent providers.
+  static Future<Dio> _getDio(AIServiceProviderConfig config) async {
+    final key = config.isTokenNest
+        ? await TokenNestAuthService.instance.accessToken() : config.apiKey;
+    return Dio(BaseOptions(
+      baseUrl: config.isTokenNest ? TokenNestAuthService.apiBase : config.baseUrl,
+      followRedirects: !config.isTokenNest,
       connectTimeout: const Duration(seconds: 60),
       receiveTimeout: const Duration(seconds: 60),
+      headers: {'Authorization': 'Bearer $key', 'Content-Type': 'application/json'},
     ));
-    _dio!.options.baseUrl = config.baseUrl;
-    _dio!.options.headers = {
-      'Authorization': 'Bearer ${config.apiKey}',
-      'Content-Type': 'application/json',
-    };
-    return _dio!;
   }
 
   // ============================================================
@@ -65,7 +63,7 @@ class AIProviderFactory {
 
     logger.debug(tag, '发起文本对话 (${config.name}, 模型: ${config.textModel})');
 
-    if (config.isBuiltIn) {
+    if (config.isBuiltIn && !config.isTokenNest) {
       return _chatZhipu(config, prompt, systemPrompt, temperature);
     } else {
       return _chatOpenAI(config, prompt, systemPrompt, temperature);
@@ -99,7 +97,7 @@ class AIProviderFactory {
 
     logger.debug(tag, '发起图片理解 (${config.name}, 模型: ${config.visionModel})');
 
-    if (config.isBuiltIn) {
+    if (config.isBuiltIn && !config.isTokenNest) {
       return _visionZhipu(config, image, prompt);
     } else {
       return _visionOpenAI(config, image, prompt);
@@ -131,7 +129,7 @@ class AIProviderFactory {
 
     logger.debug(tag, '发起语音转文字 (${config.name}, 模型: ${config.audioModel})');
 
-    if (config.isBuiltIn) {
+    if (config.isBuiltIn && !config.isTokenNest) {
       return _speechToTextZhipu(config, audio);
     } else {
       return _speechToTextOpenAI(config, audio);
@@ -181,7 +179,7 @@ class AIProviderFactory {
 
     try {
       String response;
-      if (config.isBuiltIn) {
+      if (config.isBuiltIn && !config.isTokenNest) {
         response = await _chatZhipu(config, 'hi', null, 0.7);
       } else {
         response = await _chatOpenAI(config, 'hi', null, 0.7);
@@ -229,7 +227,7 @@ class AIProviderFactory {
 
       try {
         String response;
-        if (config.isBuiltIn) {
+        if (config.isBuiltIn && !config.isTokenNest) {
           response = await _visionZhipu(config, testImage, '描述这张图片');
         } else {
           response = await _visionOpenAI(config, testImage, '描述这张图片');
@@ -282,7 +280,7 @@ class AIProviderFactory {
       await testAudio.writeAsBytes(testAudioBytes);
 
       try {
-        if (config.isBuiltIn) {
+        if (config.isBuiltIn && !config.isTokenNest) {
           await _speechToTextZhipu(config, testAudio);
         } else {
           await _speechToTextOpenAI(config, testAudio);
@@ -509,7 +507,7 @@ class AIProviderFactory {
     String? systemPrompt,
     double temperature,
   ) async {
-    final dio = _getDio(config);
+    final dio = await _getDio(config);
 
     final messages = <Map<String, dynamic>>[];
     if (systemPrompt != null && systemPrompt.isNotEmpty) {
@@ -540,7 +538,7 @@ class AIProviderFactory {
     File image,
     String prompt,
   ) async {
-    final dio = _getDio(config);
+    final dio = await _getDio(config);
 
     final imageBytes = await image.readAsBytes();
     final base64Image = base64Encode(imageBytes);
@@ -582,7 +580,7 @@ class AIProviderFactory {
     AIServiceProviderConfig config,
     File audio,
   ) async {
-    final dio = _getDio(config);
+    final dio = await _getDio(config);
 
     logger.debug('AIFactory', '请求: ${config.baseUrl}/audio/transcriptions');
 
@@ -613,6 +611,9 @@ class AIProviderFactory {
 
   /// 提取 Dio 错误信息
   static String _extractDioError(DioException e, {String? logTag}) {
+    if (e.requestOptions.uri.origin == TokenNestAuthService.issuer) {
+      return 'TokenNest 请求失败（HTTP ${e.response?.statusCode ?? 0}），请检查模型或重新登录';
+    }
     final tag = logTag ?? 'AIFactory';
     final statusCode = e.response?.statusCode;
     final responseData = e.response?.data;

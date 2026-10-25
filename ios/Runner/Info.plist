@@ -2,7 +2,9 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>CFBundleDevelopmentRegion</key>
+	<key>FlutterDeepLinkingEnabled</key>
+    <false/>
+    <key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
 	<string>$(APP_DISPLAY_NAME)</string>
@@ -100,6 +102,7 @@
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>beecount</string>
+                <string>beecount.oauth</string>
 			</array>
 		</dict>
 	</array>

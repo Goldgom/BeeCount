@@ -1,3 +1,4 @@
+import 'ai/providers/tokennest_auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_cloud_sync/flutter_cloud_sync.dart';
@@ -347,6 +348,14 @@ void _setupUrlListener(ProviderContainer container) {
   try {
     logger.info('AppLink', '初始化URL监听...');
 
+    const MethodChannel('com.tntlikely.beecount/oauth').setMethodCallHandler((call) async {
+      if (call.method == 'callback' && call.arguments is String) {
+        final uri = Uri.tryParse(call.arguments as String);
+        if (uri != null && TokenNestAuthService.isOAuthCallback(uri)) {
+          await TokenNestAuthService.instance.handleCallback(uri);
+        }
+      }
+    });
     final appLinks = AppLinks();
     final appLinkService = AppLinkService(container);
 
@@ -422,6 +431,10 @@ void _setupUrlListener(ProviderContainer container) {
 
     // 监听URL(冷启动初始链接 + 应用在后台时的后续链接都走这里)
     appLinks.uriLinkStream.listen((uri) {
+      if (TokenNestAuthService.isOAuthCallback(uri)) {
+        TokenNestAuthService.instance.handleCallback(uri);
+        return;
+      }
       logger.info('AppLink', '收到URL: $uri');
       if (isAppReady()) {
         dispatch(uri);

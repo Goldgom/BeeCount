@@ -141,7 +141,12 @@ android {
     buildTypes {
         debug {
             // Debug 构建追加独立后缀，名称显示为测试版，便于与生产包共存
-            applicationIdSuffix ".debug"
+            // Explicit opt-in for side-by-side USB testing; normal builds retain .debug.
+            def previewSuffix = project.findProperty('beecountPreviewSuffix')
+            if (previewSuffix != null && !(previewSuffix ==~ /\.[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z][A-Za-z0-9_]*)*/)) {
+                throw new GradleException('beecountPreviewSuffix must be a valid dotted application ID suffix')
+            }
+            applicationIdSuffix previewSuffix ?: ".debug"
             versionNameSuffix "-debug"
             resValue "string", "app_name", "蜜蜂记账测试版"
         }
