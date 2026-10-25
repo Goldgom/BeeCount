@@ -37,7 +37,7 @@ class AppListTile extends StatelessWidget {
     final subStyle = BeeTextTokens.label(context)
         .copyWith(color: BeeTokens.textSecondary(context)); // ⭐ 使用 Token
     final tile = Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.symmetric(vertical: 10),
       child: Row(
         children: [
           _withDot(
@@ -50,7 +50,7 @@ class AppListTile extends StatelessWidget {
                         .colorScheme
                         .primary
                         .withValues(alpha: 0.12),
-                    shape: BoxShape.circle,
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
                     leading,
@@ -65,12 +65,12 @@ class AppListTile extends StatelessWidget {
               children: [
                 Text(title,
                     style: titleStyle,
-                    maxLines: 1,
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis),
                 if (subtitle != null)
                   Text(subtitle!,
                       style: subStyle,
-                      maxLines: 1,
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis),
               ],
             ),
@@ -78,16 +78,22 @@ class AppListTile extends StatelessWidget {
           if (trailing != null)
             trailing!
           else if (enabled)
-            Icon(Icons.chevron_right, color: BeeTokens.iconTertiary(context)), // ⭐ 使用 Token
+            Icon(Icons.chevron_right,
+                color: BeeTokens.iconTertiary(context)), // ⭐ 使用 Token
         ],
       ),
     );
 
     return Opacity(
       opacity: enabled ? 1 : 0.5,
-      child: InkWell(
-        onTap: enabled ? onTap : null,
-        child: tile,
+      child: Semantics(
+        button: onTap != null,
+        enabled: enabled,
+        child: InkWell(
+          onTap: enabled ? onTap : null,
+          child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 52), child: tile),
+        ),
       ),
     );
   }

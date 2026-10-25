@@ -15,6 +15,12 @@ class BookkeepingResult {
   /// 因创建失败被跳过的笔数(amount 已校验,失败原因通常是 DB 异常)
   final int failedCount;
 
+  /// 被幂等保护拦截的疑似重复交易数量。
+  final int duplicateCount;
+
+  /// 已存在的重复交易 ID。
+  final List<int> duplicateTransactionIds;
+
   /// 本次入库里「拿不到汇率、按 1:1 暂记」的外币币种(去重、已排序)。
   ///
   /// 多币种降级路径(.docs/multi-currency-ai A5):自动通道无人值守,缺汇率
@@ -27,11 +33,15 @@ class BookkeepingResult {
     this.savedBills = const [],
     this.transactionIds = const [],
     this.failedCount = 0,
+    this.duplicateCount = 0,
+    this.duplicateTransactionIds = const [],
     this.unconvertedCurrencies = const [],
   });
 
   /// 至少有一笔成功入库
   bool get success => transactionIds.isNotEmpty;
+
+  bool get hasDuplicates => duplicateCount > 0;
 
   /// 多笔
   bool get isMulti => transactionIds.length > 1;

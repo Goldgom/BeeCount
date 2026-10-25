@@ -56,8 +56,14 @@ class _HomePageState extends ConsumerState<HomePage> {
   // → fallback 到 cachedFullData(只有前 20 条预加载)→ 等 Drift 推数据 → 切回
   // 完整列表,视觉上"整页闪一下"。这里把 stream 缓存到 State,只在 ledgerId
   // 变化时重建,无关 setState 重 build 时复用同一 stream 引用。
-  Stream<List<({Transaction t, Category? category, Account? account, Account? toAccount})>>?
-      _txStream;
+  Stream<
+      List<
+          ({
+            Transaction t,
+            Category? category,
+            Account? account,
+            Account? toAccount
+          })>>? _txStream;
   int? _txStreamLedgerId;
 
   // 月初提醒状态
@@ -584,8 +590,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(
-                            builder: (_) => const BudgetPage()),
+                        MaterialPageRoute(builder: (_) => const BudgetPage()),
                       );
                     },
                     child: Text(
@@ -749,10 +754,8 @@ class _HomePageState extends ConsumerState<HomePage> {
                                             }
                                           },
                                           child: Container(
-                                            padding:
-                                                const EdgeInsets.symmetric(
-                                                    horizontal: 10,
-                                                    vertical: 6),
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 10, vertical: 6),
                                             decoration: BoxDecoration(
                                               color: Theme.of(context)
                                                           .brightness ==
@@ -861,8 +864,8 @@ class _HomePageState extends ConsumerState<HomePage> {
                             tooltip: AppLocalizations.of(context).aiChatTitle,
                             padding: const EdgeInsets.all(8),
                             style: IconButton.styleFrom(
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.padded,
+                              minimumSize: const Size(48, 48),
                             ),
                             onPressed: () {
                               _transactionListKey.currentState
@@ -883,8 +886,8 @@ class _HomePageState extends ConsumerState<HomePage> {
                           tooltip: AppLocalizations.of(context).calendarTitle,
                           padding: const EdgeInsets.all(6),
                           style: IconButton.styleFrom(
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.padded,
+                            minimumSize: const Size(48, 48),
                           ),
                           onPressed: () {
                             Navigator.push(
@@ -904,8 +907,8 @@ class _HomePageState extends ConsumerState<HomePage> {
                           tooltip: AppLocalizations.of(context).homeSearch,
                           padding: const EdgeInsets.all(6),
                           style: IconButton.styleFrom(
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.padded,
+                            minimumSize: const Size(48, 48),
                           ),
                           onPressed: () {
                             _transactionListKey.currentState
@@ -925,7 +928,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 20),
                   // 第二行 - 月份显示和统计
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
@@ -965,8 +968,8 @@ class _HomePageState extends ConsumerState<HomePage> {
                                               .textTheme
                                               .bodyLarge
                                               ?.color, // ⭐ 自适应主文字颜色
-                                          fontSize: 20,
-                                          fontWeight: FontWeight.w500),
+                                          fontSize: 24,
+                                          fontWeight: FontWeight.w600),
                                 ),
                                 const SizedBox(width: 4),
                                 // 月份旁边的向下三角形（日期选择）
@@ -1032,14 +1035,22 @@ class _HomePageState extends ConsumerState<HomePage> {
             return const SizedBox.shrink();
           }),
           Expanded(
-            child: StreamBuilder<List<({Transaction t, Category? category, Account? account, Account? toAccount})>>(
+            child: StreamBuilder<
+                List<
+                    ({
+                      Transaction t,
+                      Category? category,
+                      Account? account,
+                      Account? toAccount
+                    })>>(
               key: ValueKey('transactions_$_streamBuilderKey'), // 使用递增key强制重建
               stream: () {
                 // ledgerId 变了或第一次进来才重建 stream;无关 setState(预算
                 // 提示卡片、月度提醒等)的 home rebuild 复用同一 stream 引用,
                 // StreamBuilder 不会重新订阅,不会闪到 fallback 数据。
                 if (_txStream == null || _txStreamLedgerId != ledgerId) {
-                  _txStream = repo.transactionsWithCategoryAll(ledgerId: ledgerId);
+                  _txStream =
+                      repo.transactionsWithCategoryAll(ledgerId: ledgerId);
                   _txStreamLedgerId = ledgerId;
                 }
                 return _txStream;

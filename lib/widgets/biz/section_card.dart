@@ -9,13 +9,12 @@ class SectionCard extends StatelessWidget {
   const SectionCard({
     super.key,
     required this.child,
-    this.padding = const EdgeInsets.all(BeeDimens.p12),
-    this.margin = const EdgeInsets.symmetric(horizontal: BeeDimens.p12), // 默认值
+    this.padding = const EdgeInsets.all(BeeDimens.p16),
+    this.margin = const EdgeInsets.symmetric(horizontal: BeeDimens.p16), // 默认值
   });
 
   @override
   Widget build(BuildContext context) {
-    final isDark = BeeTokens.isDark(context);
     final borderWidth = BeeTokens.cardOuterBorderWidth(context);
     final borderColor = BeeTokens.cardOuterBorderColor(context);
 
@@ -30,7 +29,6 @@ class SectionCard extends StatelessWidget {
                 width: borderWidth,
               )
             : null,
-        boxShadow: isDark ? null : BeeShadows.card,  // ⭐ 暗黑模式：无阴影，亮色模式：有阴影
       ),
       child: Padding(
         padding: padding,

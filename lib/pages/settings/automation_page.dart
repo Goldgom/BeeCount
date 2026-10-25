@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import '../automation/notification_capture_page.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../widgets/ui/ui.dart';
@@ -7,7 +9,6 @@ import '../../styles/tokens.dart';
 import '../transaction/recurring_transaction_page.dart';
 import '../settings/reminder_settings_page.dart';
 import '../../l10n/app_localizations.dart';
-import '../../utils/ui_scale_extensions.dart';
 
 /// 自动化功能二级页面
 class AutomationPage extends ConsumerWidget {
@@ -32,14 +33,30 @@ class AutomationPage extends ConsumerWidget {
                   margin: EdgeInsets.zero,
                   child: Column(
                     children: [
+                      if (Platform.isAndroid) ...[
+                        AppListTile(
+                          leading: Icons.receipt_long_outlined,
+                          title: '支出通知采集',
+                          subtitle: '微信、支付宝、银行通知 · 本地待确认',
+                          onTap: () => Navigator.of(context)
+                              .push(MaterialPageRoute<void>(
+                            builder: (_) => const NotificationCapturePage(),
+                          )),
+                        ),
+                        BeeTokens.cardDivider(context),
+                      ],
                       // 周期记账
                       AppListTile(
                         leading: Icons.repeat,
-                        title: AppLocalizations.of(context).mineRecurringTransactions,
-                        subtitle: AppLocalizations.of(context).mineRecurringTransactionsSubtitle,
+                        title: AppLocalizations.of(context)
+                            .mineRecurringTransactions,
+                        subtitle: AppLocalizations.of(context)
+                            .mineRecurringTransactionsSubtitle,
                         onTap: () async {
                           await Navigator.of(context).push(
-                            MaterialPageRoute(builder: (_) => const RecurringTransactionPage()),
+                            MaterialPageRoute(
+                                builder: (_) =>
+                                    const RecurringTransactionPage()),
                           );
                         },
                       ),
@@ -47,11 +64,14 @@ class AutomationPage extends ConsumerWidget {
                       // 记账提醒
                       AppListTile(
                         leading: Icons.notifications_outlined,
-                        title: AppLocalizations.of(context).mineReminderSettings,
-                        subtitle: AppLocalizations.of(context).mineReminderSettingsSubtitle,
+                        title:
+                            AppLocalizations.of(context).mineReminderSettings,
+                        subtitle: AppLocalizations.of(context)
+                            .mineReminderSettingsSubtitle,
                         onTap: () async {
                           await Navigator.of(context).push(
-                            MaterialPageRoute(builder: (_) => const ReminderSettingsPage()),
+                            MaterialPageRoute(
+                                builder: (_) => const ReminderSettingsPage()),
                           );
                         },
                       ),

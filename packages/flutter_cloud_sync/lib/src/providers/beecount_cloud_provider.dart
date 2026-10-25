@@ -451,6 +451,15 @@ class BeeCountCloudProvider implements CloudProvider {
     return storage.revokeDevice(deviceId: deviceId);
   }
 
+  /// Final cash balances include finance effects. Never add these to local balances.
+  Future<Map<String, dynamic>> readFinanceBalances() async {
+    final storage = _storage;
+    if (storage == null) {
+      throw CloudConfigurationException('BeeCount Cloud storage is not initialized.');
+    }
+    return storage.readFinanceBalances();
+  }
+
   Future<List<BeeCountCloudReadLedger>> readLedgers() async {
     final storage = _storage;
     if (storage == null) {
@@ -2751,6 +2760,18 @@ class BeeCountCloudStorageService implements CloudStorageService {
       );
     }
     return out;
+  }
+
+  Future<Map<String, dynamic>> readFinanceBalances() async {
+    final response = await _authedRequest(method: 'GET', path: '/finance/balances');
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw CloudStorageException('Read finance balances failed: ${_extractErrorMessage(response)}');
+    }
+    final decoded = jsonDecode(response.body);
+    if (decoded is! Map<String, dynamic>) {
+      throw CloudStorageException('Invalid finance balances response.');
+    }
+    return decoded;
   }
 
   Future<List<BeeCountCloudReadAccount>> readAccounts({

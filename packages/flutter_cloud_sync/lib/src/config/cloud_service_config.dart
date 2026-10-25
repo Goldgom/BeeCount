@@ -8,6 +8,7 @@ enum CloudBackendType {
   webdav, // WebDAV (坚果云、Nextcloud、群晖等)
   icloud, // iCloud (iOS only)
   s3, // S3 协议（AWS S3、Cloudflare R2、MinIO等）
+  sftp, // SFTP（自有云服务器文件目录）
 }
 
 class CloudServiceConfig {
@@ -42,6 +43,13 @@ class CloudServiceConfig {
   final bool? s3UseSSL;
   final int? s3Port;
 
+  // SFTP 配置
+  final String? sftpHost;
+  final int? sftpPort;
+  final String? sftpUsername;
+  final String? sftpPassword;
+  final String? sftpRemotePath;
+
   const CloudServiceConfig({
     required this.type,
     required this.name,
@@ -69,6 +77,12 @@ class CloudServiceConfig {
     this.s3Bucket,
     this.s3UseSSL,
     this.s3Port,
+    // SFTP
+    this.sftpHost,
+    this.sftpPort,
+    this.sftpUsername,
+    this.sftpPassword,
+    this.sftpRemotePath,
   });
 
   String get id => type.name; // 使用类型作为id
@@ -93,6 +107,11 @@ class CloudServiceConfig {
             (s3AccessKey?.isNotEmpty ?? false) &&
             (s3SecretKey?.isNotEmpty ?? false) &&
             (s3Bucket?.isNotEmpty ?? false);
+      case CloudBackendType.sftp:
+        return (sftpHost?.isNotEmpty ?? false) &&
+            (sftpUsername?.isNotEmpty ?? false) &&
+            (sftpPassword?.isNotEmpty ?? false) &&
+            (sftpPort == null || (sftpPort! >= 1 && sftpPort! <= 65535));
     }
   }
 
@@ -123,6 +142,12 @@ class CloudServiceConfig {
         's3Bucket': s3Bucket,
         's3UseSSL': s3UseSSL,
         's3Port': s3Port,
+        // SFTP
+        'sftpHost': sftpHost,
+        'sftpPort': sftpPort,
+        'sftpUsername': sftpUsername,
+        'sftpPassword': sftpPassword,
+        'sftpRemotePath': sftpRemotePath,
       };
 
   static CloudServiceConfig fromJson(Map<String, dynamic> j) {
@@ -160,6 +185,12 @@ class CloudServiceConfig {
       s3Bucket: j['s3Bucket'] as String?,
       s3UseSSL: j['s3UseSSL'] as bool?,
       s3Port: j['s3Port'] as int?,
+      // SFTP
+      sftpHost: j['sftpHost'] as String?,
+      sftpPort: j['sftpPort'] as int?,
+      sftpUsername: j['sftpUsername'] as String?,
+      sftpPassword: j['sftpPassword'] as String?,
+      sftpRemotePath: j['sftpRemotePath'] as String?,
     );
   }
 
@@ -220,6 +251,13 @@ class CloudServiceConfig {
         // 显示 endpoint / bucket
         final bucket = s3Bucket ?? '';
         return bucket.isEmpty ? s3Endpoint! : '$s3Endpoint / $bucket';
+
+      case CloudBackendType.sftp:
+        if (sftpHost == null || sftpHost!.isEmpty) {
+          return '__NOT_CONFIGURED__';
+        }
+        final path = sftpRemotePath ?? '/';
+        return '$sftpHost:${sftpPort ?? 22} $path';
     }
   }
 }

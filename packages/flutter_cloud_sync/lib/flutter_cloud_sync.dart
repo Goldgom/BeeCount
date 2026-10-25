@@ -65,6 +65,7 @@
 /// - `flutter_cloud_sync_supabase` - Supabase backend
 /// - `flutter_cloud_sync_webdav` - WebDAV backend
 /// - `flutter_cloud_sync_s3` - AWS S3 backend
+/// - `flutter_cloud_sync_sftp` - SFTP server directory backend
 ///
 library;
 

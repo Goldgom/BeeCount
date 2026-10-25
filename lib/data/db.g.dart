@@ -11145,7 +11145,11 @@ class $$LedgersTableTableManager extends RootTableManager<
             monthStartDay: monthStartDay,
           ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map((e) => (
+                    e.readTable<$LedgersTable, Ledger>(table),
+                    BaseReferences<_$BeeDatabase, $LedgersTable, Ledger>(
+                        db, table, e)
+                  ))
               .toList(),
           prefetchHooksCallback: null,
         ));
@@ -11488,7 +11492,11 @@ class $$AccountsTableTableManager extends RootTableManager<
             hidden: hidden,
           ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map((e) => (
+                    e.readTable<$AccountsTable, Account>(table),
+                    BaseReferences<_$BeeDatabase, $AccountsTable, Account>(
+                        db, table, e)
+                  ))
               .toList(),
           prefetchHooksCallback: null,
         ));
@@ -11741,7 +11749,11 @@ class $$CategoriesTableTableManager extends RootTableManager<
             syncId: syncId,
           ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map((e) => (
+                    e.readTable<$CategoriesTable, Category>(table),
+                    BaseReferences<_$BeeDatabase, $CategoriesTable, Category>(
+                        db, table, e)
+                  ))
               .toList(),
           prefetchHooksCallback: null,
         ));
@@ -12163,7 +12175,11 @@ class $$TransactionsTableTableManager extends RootTableManager<
             nativeAmount: nativeAmount,
           ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map((e) => (
+                    e.readTable<$TransactionsTable, Transaction>(table),
+                    BaseReferences<_$BeeDatabase, $TransactionsTable,
+                        Transaction>(db, table, e)
+                  ))
               .toList(),
           prefetchHooksCallback: null,
         ));
@@ -12563,7 +12579,12 @@ class $$RecurringTransactionsTableTableManager extends RootTableManager<
             updatedAt: updatedAt,
           ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map((e) => (
+                    e.readTable<$RecurringTransactionsTable,
+                        RecurringTransaction>(table),
+                    BaseReferences<_$BeeDatabase, $RecurringTransactionsTable,
+                        RecurringTransaction>(db, table, e)
+                  ))
               .toList(),
           prefetchHooksCallback: null,
         ));
@@ -12732,7 +12753,11 @@ class $$ConversationsTableTableManager extends RootTableManager<
             updatedAt: updatedAt,
           ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map((e) => (
+                    e.readTable<$ConversationsTable, Conversation>(table),
+                    BaseReferences<_$BeeDatabase, $ConversationsTable,
+                        Conversation>(db, table, e)
+                  ))
               .toList(),
           prefetchHooksCallback: null,
         ));
@@ -12942,7 +12967,11 @@ class $$MessagesTableTableManager extends RootTableManager<
             createdAt: createdAt,
           ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map((e) => (
+                    e.readTable<$MessagesTable, Message>(table),
+                    BaseReferences<_$BeeDatabase, $MessagesTable, Message>(
+                        db, table, e)
+                  ))
               .toList(),
           prefetchHooksCallback: null,
         ));
@@ -13114,7 +13143,10 @@ class $$TagsTableTableManager extends RootTableManager<
             syncId: syncId,
           ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map((e) => (
+                    e.readTable<$TagsTable, Tag>(table),
+                    BaseReferences<_$BeeDatabase, $TagsTable, Tag>(db, table, e)
+                  ))
               .toList(),
           prefetchHooksCallback: null,
         ));
@@ -13250,7 +13282,11 @@ class $$TransactionTagsTableTableManager extends RootTableManager<
             tagId: tagId,
           ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map((e) => (
+                    e.readTable<$TransactionTagsTable, TransactionTag>(table),
+                    BaseReferences<_$BeeDatabase, $TransactionTagsTable,
+                        TransactionTag>(db, table, e)
+                  ))
               .toList(),
           prefetchHooksCallback: null,
         ));
@@ -13502,7 +13538,11 @@ class $$BudgetsTableTableManager extends RootTableManager<
             updatedAt: updatedAt,
           ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map((e) => (
+                    e.readTable<$BudgetsTable, Budget>(table),
+                    BaseReferences<_$BeeDatabase, $BudgetsTable, Budget>(
+                        db, table, e)
+                  ))
               .toList(),
           prefetchHooksCallback: null,
         ));
@@ -13763,7 +13803,12 @@ class $$TransactionAttachmentsTableTableManager extends RootTableManager<
             createdAt: createdAt,
           ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map((e) => (
+                    e.readTable<$TransactionAttachmentsTable,
+                        TransactionAttachment>(table),
+                    BaseReferences<_$BeeDatabase, $TransactionAttachmentsTable,
+                        TransactionAttachment>(db, table, e)
+                  ))
               .toList(),
           prefetchHooksCallback: null,
         ));
@@ -13993,7 +14038,11 @@ class $$LocalChangesTableTableManager extends RootTableManager<
             pushedAt: pushedAt,
           ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map((e) => (
+                    e.readTable<$LocalChangesTable, LocalChange>(table),
+                    BaseReferences<_$BeeDatabase, $LocalChangesTable,
+                        LocalChange>(db, table, e)
+                  ))
               .toList(),
           prefetchHooksCallback: null,
         ));
@@ -14175,7 +14224,11 @@ class $$SyncStateTableTableManager extends RootTableManager<
             lastPullAt: lastPullAt,
           ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map((e) => (
+                    e.readTable<$SyncStateTable, SyncStateData>(table),
+                    BaseReferences<_$BeeDatabase, $SyncStateTable,
+                        SyncStateData>(db, table, e)
+                  ))
               .toList(),
           prefetchHooksCallback: null,
         ));
@@ -14394,7 +14447,11 @@ class $$LedgerMembersTableTableManager extends RootTableManager<
             rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map((e) => (
+                    e.readTable<$LedgerMembersTable, LedgerMember>(table),
+                    BaseReferences<_$BeeDatabase, $LedgerMembersTable,
+                        LedgerMember>(db, table, e)
+                  ))
               .toList(),
           prefetchHooksCallback: null,
         ));
@@ -14713,7 +14770,12 @@ class $$SharedLedgerCategoriesTableTableManager extends RootTableManager<
             rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map((e) => (
+                    e.readTable<$SharedLedgerCategoriesTable,
+                        SharedLedgerCategory>(table),
+                    BaseReferences<_$BeeDatabase, $SharedLedgerCategoriesTable,
+                        SharedLedgerCategory>(db, table, e)
+                  ))
               .toList(),
           prefetchHooksCallback: null,
         ));
@@ -15017,7 +15079,12 @@ class $$SharedLedgerAccountsTableTableManager extends RootTableManager<
             rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map((e) => (
+                    e.readTable<$SharedLedgerAccountsTable,
+                        SharedLedgerAccount>(table),
+                    BaseReferences<_$BeeDatabase, $SharedLedgerAccountsTable,
+                        SharedLedgerAccount>(db, table, e)
+                  ))
               .toList(),
           prefetchHooksCallback: null,
         ));
@@ -15194,7 +15261,11 @@ class $$SharedLedgerTagsTableTableManager extends RootTableManager<
             rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map((e) => (
+                    e.readTable<$SharedLedgerTagsTable, SharedLedgerTag>(table),
+                    BaseReferences<_$BeeDatabase, $SharedLedgerTagsTable,
+                        SharedLedgerTag>(db, table, e)
+                  ))
               .toList(),
           prefetchHooksCallback: null,
         ));
@@ -15344,7 +15415,12 @@ class $$TransactionTagOverridesTableTableManager extends RootTableManager<
             rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map((e) => (
+                    e.readTable<$TransactionTagOverridesTable,
+                        TransactionTagOverride>(table),
+                    BaseReferences<_$BeeDatabase, $TransactionTagOverridesTable,
+                        TransactionTagOverride>(db, table, e)
+                  ))
               .toList(),
           prefetchHooksCallback: null,
         ));
@@ -15671,7 +15747,11 @@ class $$SyncPullErrorsTableTableManager extends RootTableManager<
             resolvedAt: resolvedAt,
           ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map((e) => (
+                    e.readTable<$SyncPullErrorsTable, SyncPullError>(table),
+                    BaseReferences<_$BeeDatabase, $SyncPullErrorsTable,
+                        SyncPullError>(db, table, e)
+                  ))
               .toList(),
           prefetchHooksCallback: null,
         ));
@@ -15861,7 +15941,11 @@ class $$ExchangeRatesTableTableManager extends RootTableManager<
             rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map((e) => (
+                    e.readTable<$ExchangeRatesTable, ExchangeRate>(table),
+                    BaseReferences<_$BeeDatabase, $ExchangeRatesTable,
+                        ExchangeRate>(db, table, e)
+                  ))
               .toList(),
           prefetchHooksCallback: null,
         ));
@@ -16050,7 +16134,12 @@ class $$ExchangeRateOverridesTableTableManager extends RootTableManager<
             updatedAt: updatedAt,
           ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map((e) => (
+                    e.readTable<$ExchangeRateOverridesTable,
+                        ExchangeRateOverride>(table),
+                    BaseReferences<_$BeeDatabase, $ExchangeRateOverridesTable,
+                        ExchangeRateOverride>(db, table, e)
+                  ))
               .toList(),
           prefetchHooksCallback: null,
         ));

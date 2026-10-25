@@ -78,6 +78,7 @@ class _CloudServicePageState extends ConsumerState<CloudServicePage> {
     final supabaseAsync = ref.watch(supabaseConfigProvider);
     final webdavAsync = ref.watch(webdavConfigProvider);
     final s3Async = ref.watch(s3ConfigProvider);
+    final sftpAsync = ref.watch(sftpConfigProvider);
 
     return Scaffold(
       backgroundColor: BeeTokens.scaffoldBackground(context),
@@ -220,6 +221,32 @@ class _CloudServicePageState extends ConsumerState<CloudServicePage> {
                               ? () => _configureService(CloudBackendType.s3)
                               : null,
                           onShowGuide: _showS3HelpDialog,
+                        ),
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      // SFTP 云盘
+                      sftpAsync.when(
+                        loading: () => const SizedBox(height: 100, child: Center(child: CircularProgressIndicator())),
+                        error: (e, _) => const SizedBox.shrink(),
+                        data: (sftpCfg) => _buildServiceCard(
+                          context: context,
+                          icon: Icons.cloud_upload,
+                          iconColor: BeeTokens.brandWebdav,
+                          title: AppLocalizations.of(context).sftpUploadTitle,
+                          subtitle: sftpCfg?.valid == true
+                              ? sftpCfg!.obfuscatedUrl()
+                              : AppLocalizations.of(context).sftpUploadHint,
+                          isSelected: active.type == CloudBackendType.sftp,
+                          isConfigured: sftpCfg?.valid == true,
+                          isDisabled: false,
+                          onTap: () => sftpCfg?.valid == true
+                              ? _switchService(CloudBackendType.sftp)
+                              : _configureService(CloudBackendType.sftp),
+                          onConfigure: sftpCfg?.valid == true
+                              ? () => _configureService(CloudBackendType.sftp)
+                              : null,
                         ),
                       ),
 
@@ -1468,6 +1495,8 @@ class _CloudServicePageState extends ConsumerState<CloudServicePage> {
         ref.invalidate(activeCloudConfigProvider);
         ref.invalidate(supabaseConfigProvider);
         ref.invalidate(webdavConfigProvider);
+        ref.invalidate(s3ConfigProvider);
+        ref.invalidate(sftpConfigProvider);
         ref.invalidate(authServiceProvider);
         ref.invalidate(syncServiceProvider);
       });
@@ -1492,6 +1521,8 @@ class _CloudServicePageState extends ConsumerState<CloudServicePage> {
       await _showWebdavConfigDialog();
     } else if (type == CloudBackendType.s3) {
       await _showS3ConfigDialog();
+    } else if (type == CloudBackendType.sftp) {
+      await _showSftpConfigDialog();
     }
   }
 
@@ -1782,6 +1813,68 @@ class _CloudServicePageState extends ConsumerState<CloudServicePage> {
     }
   }
 
+  Future<void> _showSftpConfigDialog() async {
+    final existing = await ref.read(sftpConfigProvider.future);
+
+    if (!mounted) return;
+
+    final result = await showDialog<Map<String, dynamic>?>(
+      context: context,
+      builder: (dialogContext) => _SftpConfigDialog(
+        initialHost: existing?.sftpHost ?? '',
+        initialPort: existing?.sftpPort ?? 22,
+        initialUsername: existing?.sftpUsername ?? '',
+        initialPassword: existing?.sftpPassword ?? '',
+        initialPath: existing?.sftpRemotePath ?? '/',
+      ),
+    );
+
+    if (result == null) return;
+
+    final host = result['host'] as String;
+    final port = result['port'] as int? ?? 22;
+    final username = result['username'] as String;
+    final password = result['password'] as String;
+    final path = result['path'] as String;
+
+    if (host.isEmpty || username.isEmpty || password.isEmpty ||
+        port < 1 || port > 65535) {
+      if (mounted) {
+        await AppDialog.error(
+          context,
+          title: AppLocalizations.of(context).cloudConfigInvalidTitle,
+          message: AppLocalizations.of(context).cloudConfigInvalidMessage,
+        );
+      }
+      return;
+    }
+
+    final cfg = CloudServiceConfig(
+      type: CloudBackendType.sftp,
+      name: AppLocalizations.of(context).sftpUploadTitle,
+      sftpHost: host,
+      sftpPort: port,
+      sftpUsername: username,
+      sftpPassword: password,
+      sftpRemotePath: path.isEmpty ? '/' : path,
+    );
+
+    try {
+      await ref.read(cloudServiceStoreProvider).saveOnly(cfg);
+      ref.invalidate(sftpConfigProvider);
+      ref.invalidate(activeCloudConfigProvider);
+      if (mounted) showToast(context, AppLocalizations.of(context).cloudConfigSaved);
+    } catch (e) {
+      if (mounted) {
+        await AppDialog.error(
+          context,
+          title: AppLocalizations.of(context).cloudSaveFailed,
+          message: e.toString(),
+        );
+      }
+    }
+  }
+
   String _getTypeName(CloudBackendType type) {
     switch (type) {
       case CloudBackendType.local:
@@ -1796,6 +1889,8 @@ class _CloudServicePageState extends ConsumerState<CloudServicePage> {
         return 'S3';
       case CloudBackendType.beecountCloud:
         return 'BeeCount Cloud';
+      case CloudBackendType.sftp:
+        return 'SFTP';
     }
   }
 
@@ -1898,6 +1993,19 @@ class _CloudServicePageState extends ConsumerState<CloudServicePage> {
                 errorMsg = errorMsg.replaceFirst('Exception: ', '');
               }
               throw Exception(errorMsg);
+            }
+            break;
+
+          case CloudBackendType.sftp:
+            try {
+              final services = await createCloudServices(config);
+              if (services.provider == null) {
+                throw Exception('SFTP provider initialization failed');
+              }
+              await services.provider!.storage.list(path: '');
+              connectionSuccess = true;
+            } catch (e) {
+              throw Exception(e.toString().replaceFirst('Exception: ', ''));
             }
             break;
 
@@ -2317,6 +2425,138 @@ class _WebdavConfigDialogState extends State<_WebdavConfigDialog> {
 }
 
 // S3配置对话框(独立Widget,避免controller生命周期问题)
+class _SftpConfigDialog extends StatefulWidget {
+  final String initialHost;
+  final int initialPort;
+  final String initialUsername;
+  final String initialPassword;
+  final String initialPath;
+
+  const _SftpConfigDialog({
+    required this.initialHost,
+    required this.initialPort,
+    required this.initialUsername,
+    required this.initialPassword,
+    required this.initialPath,
+  });
+
+  @override
+  State<_SftpConfigDialog> createState() => _SftpConfigDialogState();
+}
+
+class _SftpConfigDialogState extends State<_SftpConfigDialog> {
+  late final TextEditingController hostController;
+  late final TextEditingController portController;
+  late final TextEditingController usernameController;
+  late final TextEditingController passwordController;
+  late final TextEditingController pathController;
+  bool obscurePassword = true;
+
+  @override
+  void initState() {
+    super.initState();
+    hostController = TextEditingController(text: widget.initialHost);
+    portController = TextEditingController(text: widget.initialPort.toString());
+    usernameController = TextEditingController(text: widget.initialUsername);
+    passwordController = TextEditingController(text: widget.initialPassword);
+    pathController = TextEditingController(text: widget.initialPath);
+  }
+
+  @override
+  void dispose() {
+    hostController.dispose();
+    portController.dispose();
+    usernameController.dispose();
+    passwordController.dispose();
+    pathController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return AlertDialog(
+      title: Text(AppLocalizations.of(context).sftpUploadTitle),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: hostController,
+              decoration: InputDecoration(
+                labelText: l10n.sftpHost,
+                hintText: 'cloud.example.com',
+              ),
+              keyboardType: TextInputType.url,
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: portController,
+                    decoration: InputDecoration(labelText: l10n.sftpPort),
+                    keyboardType: TextInputType.number,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 2,
+                  child: TextField(
+                    controller: usernameController,
+                    decoration: InputDecoration(labelText: l10n.sftpUsername),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: passwordController,
+              obscureText: obscurePassword,
+              decoration: InputDecoration(
+                labelText: l10n.sftpPassword,
+                suffixIcon: IconButton(
+                  icon: Icon(obscurePassword
+                      ? Icons.visibility_outlined
+                      : Icons.visibility_off_outlined),
+                  onPressed: () => setState(() => obscurePassword = !obscurePassword),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: pathController,
+              decoration: InputDecoration(
+                labelText: l10n.sftpRemoteDirectory,
+                hintText: '/backups/beecount',
+                helperText: l10n.sftpUploadHint,
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(null),
+          child: Text(l10n.commonCancel),
+        ),
+        FilledButton(
+          onPressed: () {
+            Navigator.of(context).pop({
+              'host': hostController.text.trim(),
+              'port': int.tryParse(portController.text.trim()),
+              'username': usernameController.text.trim(),
+              'password': passwordController.text,
+              'path': pathController.text.trim(),
+            });
+          },
+          child: Text(l10n.commonSave),
+        ),
+      ],
+    );
+  }
+}
+
 class _S3ConfigDialog extends StatefulWidget {
   final String initialEndpoint;
   final String initialRegion;

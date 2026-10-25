@@ -5,6 +5,7 @@ import 'package:flutter_cloud_sync_supabase/flutter_cloud_sync_supabase.dart';
 import 'package:flutter_cloud_sync_webdav/flutter_cloud_sync_webdav.dart';
 import 'package:flutter_cloud_sync_icloud/flutter_cloud_sync_icloud.dart';
 import 'package:flutter_cloud_sync_s3/flutter_cloud_sync_s3.dart';
+import 'package:flutter_cloud_sync_sftp/flutter_cloud_sync_sftp.dart';
 import '../providers/beecount_cloud_provider.dart';
 
 import '../core/auth_service.dart';
@@ -100,6 +101,17 @@ Future<({CloudProvider? provider, CloudAuthService? auth})> createCloudServices(
       final auth = provider.auth;
 
       return (provider: provider, auth: auth);
+
+    case CloudBackendType.sftp:
+      final provider = SftpProvider();
+      await provider.initialize({
+        'host': config.sftpHost!,
+        'port': config.sftpPort ?? 22,
+        'username': config.sftpUsername!,
+        'password': config.sftpPassword!,
+        'remotePath': config.sftpRemotePath ?? '/',
+      });
+      return (provider: provider, auth: provider.auth);
   }
 }
 

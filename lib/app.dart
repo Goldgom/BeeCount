@@ -244,8 +244,7 @@ class _BeeAppState extends ConsumerState<BeeApp>
           logger.info('AppStart', '本地无账本,跳过首次同步');
           return;
         }
-        logger.info('AppStart',
-            'BeeCount Cloud 首次同步: 本地账本数=${ledgers.length}');
+        logger.info('AppStart', 'BeeCount Cloud 首次同步: 本地账本数=${ledgers.length}');
         final overallStart = DateTime.now();
 
         // ========== Phase 1: 用户级一次性 ==========
@@ -263,10 +262,10 @@ class _BeeAppState extends ConsumerState<BeeApp>
         List<dynamic>? remoteLedgers;
         try {
           remoteLedgers = await engine.provider.storage.list(path: '');
-          logger.info(
-              'AppStart', 'Phase1: 远端账本=${remoteLedgers.length}');
+          logger.info('AppStart', 'Phase1: 远端账本=${remoteLedgers.length}');
         } catch (e, st) {
-          logger.warning('AppStart', 'Phase1: 拉 remote_ledgers 失败,fallback', st);
+          logger.warning(
+              'AppStart', 'Phase1: 拉 remote_ledgers 失败,fallback', st);
           logger.warning('AppStart', 'error: $e');
         }
 
@@ -286,7 +285,8 @@ class _BeeAppState extends ConsumerState<BeeApp>
         //       user-global 的新增/重命名也能推上去(原来 Phase 2 skip 时会漏)
         try {
           final pushed = await engine.pushUserGlobalEntities();
-          logger.info('AppStart', 'Phase1: pushUserGlobalEntities pushed=$pushed');
+          logger.info(
+              'AppStart', 'Phase1: pushUserGlobalEntities pushed=$pushed');
         } catch (e, st) {
           logger.error('AppStart', 'Phase1: pushUserGlobalEntities 失败', e, st);
         }
@@ -364,8 +364,7 @@ class _BeeAppState extends ConsumerState<BeeApp>
 
         final totalPushed = results.fold<int>(0, (a, b) => a + b.pushed);
         final skipped = results.where((r) => r.skipped).length;
-        final totalMs =
-            DateTime.now().difference(overallStart).inMilliseconds;
+        final totalMs = DateTime.now().difference(overallStart).inMilliseconds;
         logger.info('AppStart',
             'BeeCount Cloud 首次同步完成: synced=${ledgers.length - skipped} skipped=$skipped pushed=$totalPushed 总耗时 ${totalMs}ms');
         ref.read(syncStatusRefreshProvider.notifier).state++;
@@ -429,20 +428,23 @@ class _BeeAppState extends ConsumerState<BeeApp>
     String? page,
   }) {
     SharedPreferences.getInstance().then((p) {
-      p.setString(_kPendingDeepLink, jsonEncode({
-        'action': action.name,
-        'type': type,
-        if (categoryId != null) 'categoryId': categoryId,
-        if (page != null) 'page': page,
-        'ts': DateTime.now().millisecondsSinceEpoch,
-      }));
+      p.setString(
+          _kPendingDeepLink,
+          jsonEncode({
+            'action': action.name,
+            'type': type,
+            if (categoryId != null) 'categoryId': categoryId,
+            if (page != null) 'page': page,
+            'ts': DateTime.now().millisecondsSinceEpoch,
+          }));
     }).catchError((_) {});
   }
 
   void _drainPendingDeepLink({String trigger = ''}) {
     if (!mounted) return;
     if (ref.read(appInitStateProvider) != AppInitState.ready) return;
-    if (WidgetsBinding.instance.lifecycleState != AppLifecycleState.resumed) return;
+    if (WidgetsBinding.instance.lifecycleState != AppLifecycleState.resumed)
+      return;
     // 重建有时在 resumed 之后还会再发生一次:延迟一拍再认领,只在「存活过这段缓冲期」的
     // 最终页面树上打开。若本页在缓冲期内被销毁(重建),timer 随 dispose 取消,新页面会
     // 重新排程,自然落到稳定的页面树上。
@@ -455,7 +457,8 @@ class _BeeAppState extends ConsumerState<BeeApp>
     if (!mounted) return;
     // 必须就绪 + 前台稳定:冷启动/主题变更的重建窗口(inactive/hidden)里打开会被丢弃
     if (ref.read(appInitStateProvider) != AppInitState.ready) return;
-    if (WidgetsBinding.instance.lifecycleState != AppLifecycleState.resumed) return;
+    if (WidgetsBinding.instance.lifecycleState != AppLifecycleState.resumed)
+      return;
 
     SharedPreferences prefs;
     try {
@@ -908,7 +911,7 @@ class _BeeAppState extends ConsumerState<BeeApp>
   }
 }
 
-/// Telegram 风格悬浮胶囊底部导航栏
+/// Grouped-system tab bar; all Android actions and long-press recording remain.
 class _BeeBottomBar extends StatelessWidget {
   final int currentIndex;
   final Color primaryColor;
@@ -945,24 +948,25 @@ class _BeeBottomBar extends StatelessWidget {
     final bgColor = BeeTokens.tabBarBackground(context);
     final inactiveColor = isDark ? Colors.white70 : Colors.black54;
 
-    const barHeight = 56.0;
+    final barHeight =
+        64.0 + (MediaQuery.textScalerOf(context).scale(11) - 11).clamp(0, 24);
 
     return SizedBox(
-      height: barHeight + bottomPadding + 12, // 12dp 浮动间距
+      height: barHeight + bottomPadding, // 12dp 浮动间距
       child: Padding(
         padding: EdgeInsets.only(
-          left: 16,
-          right: 16,
-          bottom: bottomPadding + 12,
+          left: 4,
+          right: 4,
+          bottom: bottomPadding,
         ),
         child: Container(
           decoration: BoxDecoration(
             color: bgColor,
-            borderRadius: BorderRadius.circular(28),
-            boxShadow: BeeTokens.tabBarShadow,
+            border: Border(
+                top: BorderSide(color: BeeTokens.divider(context), width: 0.5)),
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: BorderRadius.zero,
             child: Stack(
               children: [
                 // 皮肤的悬浮 tab 装饰层(垫在图标之下,不影响点按)
@@ -970,18 +974,25 @@ class _BeeBottomBar extends StatelessWidget {
                   Positioned.fill(
                       child: IgnorePointer(
                           child: SkinAnimationScope(
-                              child: skin!.tabBarBuilder!(
-                                  primaryColor, isDark)))),
+                              child:
+                                  skin!.tabBarBuilder!(primaryColor, isDark)))),
                 Row(
                   children: [
                     _buildTabItem(0, Icons.receipt_long_outlined,
                         Icons.receipt_long, l10n.tabHome, inactiveColor),
-                    _buildTabItem(1, Icons.pie_chart_outline_rounded,
-                        Icons.pie_chart_rounded, l10n.tabInsights, inactiveColor),
+                    _buildTabItem(
+                        1,
+                        Icons.pie_chart_outline_rounded,
+                        Icons.pie_chart_rounded,
+                        l10n.tabInsights,
+                        inactiveColor),
                     // 中间记账按钮（作为 Tab 样式）
                     _buildCenterTabItem(inactiveColor),
-                    _buildTabItem(2, Icons.account_balance_wallet_outlined,
-                        Icons.account_balance_wallet, l10n.tabAssets,
+                    _buildTabItem(
+                        2,
+                        Icons.account_balance_wallet_outlined,
+                        Icons.account_balance_wallet,
+                        l10n.tabAssets,
                         inactiveColor),
                     _buildAvatarTabItem(3, l10n.tabMine, inactiveColor),
                   ],
@@ -994,55 +1005,57 @@ class _BeeBottomBar extends StatelessWidget {
     );
   }
 
-  Widget _buildTabItem(
-      int index, IconData icon, IconData activeIcon, String label, Color inactiveColor,
+  Widget _buildTabItem(int index, IconData icon, IconData activeIcon,
+      String label, Color inactiveColor,
       {String? dotAnchor}) {
     final isActive = index == currentIndex;
     final iconColor = isActive ? primaryColor : inactiveColor;
 
     return Expanded(
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: () => onTabTap(index),
-        child: Center(
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
-            decoration: BoxDecoration(
-              color: isActive
-                  ? primaryColor.withValues(alpha: 0.12)
-                  : Colors.transparent,
-              borderRadius: BorderRadius.circular(22),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // 新功能红点挂在图标上(不是整个 tab),这样位置跟着图标走、
-                // 不会因为 label 长短漂移
-                dotAnchor == null
-                    ? Icon(isActive ? activeIcon : icon,
-                        color: iconColor, size: 22)
-                    : FeatureDot(
-                        anchor: dotAnchor,
-                        offset: const Offset(-2, 0),
-                        child: Icon(isActive ? activeIcon : icon,
-                            color: iconColor, size: 22),
-                      ),
-                const SizedBox(height: 1),
-                Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  softWrap: false,
-                  textScaler: TextScaler.noScaling,
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: isActive ? primaryColor : inactiveColor,
-                    fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+      child: Semantics(
+        button: true,
+        selected: isActive,
+        label: label,
+        excludeSemantics: true,
+        child: InkWell(
+          onTap: () => onTabTap(index),
+          child: Center(
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.transparent,
+                borderRadius: BorderRadius.circular(22),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // 新功能红点挂在图标上(不是整个 tab),这样位置跟着图标走、
+                  // 不会因为 label 长短漂移
+                  dotAnchor == null
+                      ? Icon(isActive ? activeIcon : icon,
+                          color: iconColor, size: 22)
+                      : FeatureDot(
+                          anchor: dotAnchor,
+                          offset: const Offset(-2, 0),
+                          child: Icon(isActive ? activeIcon : icon,
+                              color: iconColor, size: 22),
+                        ),
+                  const SizedBox(height: 1),
+                  Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    softWrap: false,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: isActive ? primaryColor : inactiveColor,
+                      fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -1071,9 +1084,8 @@ class _BeeBottomBar extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 softWrap: false,
-                textScaler: TextScaler.noScaling,
                 style: TextStyle(
-                  fontSize: 10,
+                  fontSize: 11,
                   color: inactiveColor,
                   fontWeight: FontWeight.w400,
                 ),
@@ -1104,49 +1116,53 @@ class _BeeBottomBar extends StatelessWidget {
         ),
       );
     } else {
-      iconWidget = Icon(isActive ? Icons.person_rounded : Icons.person_outline_rounded,
-          color: isActive ? primaryColor : inactiveColor, size: 24);
+      iconWidget = Icon(
+          isActive ? Icons.person_rounded : Icons.person_outline_rounded,
+          color: isActive ? primaryColor : inactiveColor,
+          size: 24);
     }
 
     return Expanded(
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: () => onTabTap(index),
-        child: Center(
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
-            decoration: BoxDecoration(
-              color: isActive
-                  ? primaryColor.withValues(alpha: 0.12)
-                  : Colors.transparent,
-              borderRadius: BorderRadius.circular(22),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // 新功能红点的第一级 —— 新功能大多在「我的」这条线下面,
-                // 用户第一眼能看到的就是这里。
-                FeatureDot(
-                  anchor: 'tab_mine',
-                  offset: const Offset(-2, 0),
-                  child: iconWidget,
-                ),
-                const SizedBox(height: 1),
-                Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  softWrap: false,
-                  textScaler: TextScaler.noScaling,
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: isActive ? primaryColor : inactiveColor,
-                    fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+      child: Semantics(
+        button: true,
+        selected: isActive,
+        label: label,
+        excludeSemantics: true,
+        child: InkWell(
+          onTap: () => onTabTap(index),
+          child: Center(
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.transparent,
+                borderRadius: BorderRadius.circular(22),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // 新功能红点的第一级 —— 新功能大多在「我的」这条线下面,
+                  // 用户第一眼能看到的就是这里。
+                  FeatureDot(
+                    anchor: 'tab_mine',
+                    offset: const Offset(-2, 0),
+                    child: iconWidget,
                   ),
-                ),
-              ],
+                  const SizedBox(height: 1),
+                  Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    softWrap: false,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: isActive ? primaryColor : inactiveColor,
+                      fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

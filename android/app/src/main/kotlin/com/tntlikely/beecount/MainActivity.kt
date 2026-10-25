@@ -132,6 +132,7 @@ class MainActivity: FlutterFragmentActivity() {
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        BillingNotificationStore.setup(this, flutterEngine.dartExecutor.binaryMessenger)
 
         android.util.Log.e("MainActivity", "==========================================")
         android.util.Log.e("MainActivity", "configureFlutterEngine 被调用！！！")

@@ -13,11 +13,11 @@ dependencies:
     sdk: flutter
   flutter_riverpod: ^2.5.1
   collection: ^1.18.0
-  drift: ^2.20.2
+  drift: ^2.34.4
   sqlite3_flutter_libs: ^0.5.24
   path_provider: ^2.1.4
   path: ^1.9.0
-  intl: ^0.19.0
+  intl: ^0.20.3
   decimal: ^3.0.0
   fl_chart: ^0.68.0
   shared_preferences: ^2.3.2
@@ -35,6 +35,7 @@ dependencies:
   share_plus: ^12.0.1
   permission_handler: ^11.3.1
   dio: ^5.4.3+1
+  dartssh2: ^4.0.1
   open_filex: ^4.4.0
   flutter_local_notifications: ^17.2.2
   timezone: ^0.9.4
@@ -85,6 +86,8 @@ dependencies:
     path: packages/flutter_cloud_sync_icloud
   flutter_cloud_sync_s3:
     path: packages/flutter_cloud_sync_s3
+  flutter_cloud_sync_sftp:
+    path: packages/flutter_cloud_sync_sftp
   quick_actions: ^1.1.0
   table_calendar: ^3.1.0
   local_auth: ^2.3.0
@@ -98,7 +101,7 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^5.0.0
   build_runner: ^2.4.10
-  drift_dev: ^2.20.2
+  drift_dev: ^2.34.6
   flutter_launcher_icons: ^0.14.4
   # Testing framework enhancements
   mocktail: ^1.0.4

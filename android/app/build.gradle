@@ -35,7 +35,7 @@ android {
         applicationId = "com.tntlikely.beecount"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = 23  // Required by record_android for voice recording
+        minSdkVersion = flutter.minSdkVersion  // Required by record_android for voice recording
         // 硬编码 36(Android 16):Google Play 自 2026-11-01 起要求 targetSdk >= 36,
         // 而当前锁定的 Flutter 3.27.3 内置 flutter.targetSdkVersion 仍为 35。
         // 升 Flutter 后可考虑改回 flutter.targetSdkVersion。

@@ -4,6 +4,7 @@ import 'package:drift/drift.dart';
 import '../ai/core/ai_extraction_engine.dart';
 import '../services/ai/ai_bookkeeper.dart';
 import '../services/ai/ai_chat_service.dart';
+import '../services/ai/bookkeeping_ai_tool.dart';
 import '../services/billing/bill_creation_service.dart';
 import '../providers.dart';
 import '../data/db.dart';
@@ -37,6 +38,7 @@ final aiChatServiceProvider = Provider<AIChatService>((ref) {
   return AIChatService(
     repo: repo,
     bookkeeper: ref.watch(aiBookkeeperProvider),
+    bookkeepingTool: ref.watch(bookkeepingAiToolProviderPublic),
   );
 });
 
@@ -50,3 +52,11 @@ final messagesProvider = StreamProvider.family<List<Message>, int>(
     return repo.watchMessages(conversationId);
   },
 );
+
+// Public tool provider (kept separate from chat wiring for automation callers).
+final bookkeepingAiToolProviderPublic = Provider<BookkeepingAiTool>((ref) {
+  return DefaultBookkeepingAiTool(repository: ref.watch(repositoryProvider));
+});
+
+/// Stable provider name for external callers.
+final bookkeepingAiToolProvider = bookkeepingAiToolProviderPublic;

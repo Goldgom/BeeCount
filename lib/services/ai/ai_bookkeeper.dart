@@ -131,11 +131,18 @@ class AiBookkeeper {
 
     final saved = <BillInfo>[];
     final txIds = <int>[];
+    final duplicateIds = <int>[];
     var failed = 0;
 
     for (var i = 0; i < bills.length; i++) {
       final bill = bills[i].copyWith(ledgerId: ledgerId);
       try {
+        final duplicateId = await _findDuplicateTransaction(bill, ledgerId);
+        if (duplicateId != null) {
+          duplicateIds.add(duplicateId);
+          logger.info(_tag, '检测到疑似重复记账，跳过: existingId=$duplicateId');
+          continue;
+        }
         final txId = await _persister.createFromBill(
           bill: bill,
           ledgerId: ledgerId,
@@ -188,9 +195,33 @@ class AiBookkeeper {
       savedBills: List.unmodifiable(saved),
       transactionIds: List.unmodifiable(txIds),
       failedCount: failed,
+      duplicateCount: duplicateIds.length,
+      duplicateTransactionIds: List.unmodifiable(duplicateIds),
       unconvertedCurrencies:
           List.unmodifiable(await _collectUnconverted(txIds, ledgerId)),
     );
+  }
+
+  Future<int?> _findDuplicateTransaction(BillInfo bill, int ledgerId) async {
+    final amount = bill.amount?.abs();
+    final happenedAt = bill.time;
+    if (amount == null || happenedAt == null) return null;
+    try {
+      final transactions = await _repo.getTransactionsByLedger(ledgerId);
+      final type = bill.type == BillType.income
+          ? 'income'
+          : (bill.type == BillType.transfer ? 'transfer' : 'expense');
+      for (final tx in transactions) {
+        if (tx.type != type || (tx.amount - amount).abs() > 0.000001) continue;
+        if (tx.happenedAt.difference(happenedAt).inMinutes.abs() > 2) continue;
+        if ((tx.note ?? '').trim() != (bill.note ?? '').trim()) continue;
+        return tx.id;
+      }
+    } catch (e) {
+      // 重复检查失败不应阻断正常记账。
+      logger.debug(_tag, '重复检查失败，继续记账: $e');
+    }
+    return null;
   }
 
   /// 找出本批里「外币且未折算」的币种(A5)。判定条件与 L11 补折算横幅一致:

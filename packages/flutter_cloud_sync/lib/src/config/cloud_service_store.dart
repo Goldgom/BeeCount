@@ -5,11 +5,12 @@ import 'cloud_service_config.dart';
 /// 支持类型: 本地存储、BeeCount Cloud、自定义 Supabase、自定义 WebDAV、iCloud、S3
 class CloudServiceStore {
   static const _kActiveType =
-      'cloud_active_type'; // local | beecount_cloud | supabase | webdav | icloud | s3
+      'cloud_active_type'; // local | beecount_cloud | supabase | webdav | icloud | s3 | sftp
   static const _kBeeCountCloudCfg = 'cloud_beecount_cloud_cfg';
   static const _kSupabaseCfg = 'cloud_supabase_cfg';
   static const _kWebdavCfg = 'cloud_webdav_cfg';
   static const _kS3Cfg = 'cloud_s3_cfg';
+  static const _kSftpCfg = 'cloud_sftp_cfg';
 
   /// 加载当前激活的云服务配置
   Future<CloudServiceConfig> loadActive() async {
@@ -74,6 +75,17 @@ class CloudServiceStore {
         // 回退到本地存储
         return CloudServiceConfig.localStorage();
 
+      case 'sftp':
+        final raw = sp.getString(_kSftpCfg);
+        if (raw != null) {
+          try {
+            return decodeCloudConfig(raw);
+          } catch (e) {
+            // 解析失败时回退到本地存储
+          }
+        }
+        return CloudServiceConfig.localStorage();
+
       default:
         return CloudServiceConfig.localStorage();
     }
@@ -127,6 +139,18 @@ class CloudServiceStore {
     }
   }
 
+  /// 加载 SFTP 配置（不管是否激活）
+  Future<CloudServiceConfig?> loadSftp() async {
+    final sp = await SharedPreferences.getInstance();
+    final raw = sp.getString(_kSftpCfg);
+    if (raw == null) return null;
+    try {
+      return decodeCloudConfig(raw);
+    } catch (e) {
+      return null;
+    }
+  }
+
   /// 保存并激活配置
   Future<void> saveAndActivate(CloudServiceConfig cfg) async {
     final sp = await SharedPreferences.getInstance();
@@ -164,6 +188,11 @@ class CloudServiceStore {
         await sp.setString(_kActiveType, 's3');
         // Provider 会在下次使用时自动初始化
         break;
+
+      case CloudBackendType.sftp:
+        await sp.setString(_kSftpCfg, encodeCloudConfig(cfg));
+        await sp.setString(_kActiveType, 'sftp');
+        break;
     }
   }
 
@@ -194,6 +223,10 @@ class CloudServiceStore {
 
       case CloudBackendType.s3:
         await sp.setString(_kS3Cfg, encodeCloudConfig(cfg));
+        break;
+
+      case CloudBackendType.sftp:
+        await sp.setString(_kSftpCfg, encodeCloudConfig(cfg));
         break;
     }
   }
@@ -255,6 +288,18 @@ class CloudServiceStore {
           final cfg = decodeCloudConfig(raw);
           if (!cfg.valid) return false;
           await sp.setString(_kActiveType, 's3');
+          return true;
+        } catch (e) {
+          return false;
+        }
+
+      case CloudBackendType.sftp:
+        final raw = sp.getString(_kSftpCfg);
+        if (raw == null) return false;
+        try {
+          final cfg = decodeCloudConfig(raw);
+          if (!cfg.valid) return false;
+          await sp.setString(_kActiveType, 'sftp');
           return true;
         } catch (e) {
           return false;

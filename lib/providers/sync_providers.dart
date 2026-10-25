@@ -144,6 +144,12 @@ final s3ConfigProvider = FutureProvider<CloudServiceConfig?>((ref) async {
   return store.loadS3();
 });
 
+// SFTP 配置（不管是否激活）
+final sftpConfigProvider = FutureProvider<CloudServiceConfig?>((ref) async {
+  final store = ref.watch(cloudServiceStoreProvider);
+  return store.loadSftp();
+});
+
 final authServiceProvider = FutureProvider<CloudAuthService>((ref) async {
   final activeAsync = ref.watch(activeCloudConfigProvider);
   if (!activeAsync.hasValue) {

@@ -2,114 +2,126 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'styles/tokens.dart';
 
+/// Apple-inspired grouped surfaces, with native Material behavior on Android.
 class BeeTheme {
-  // Brand colors - Light Mode
-  static const Color honeyGold = Color(0xFFF8C91C); // 主色（亮色模式）
-  static const Color hiveBrown = Color(0xFF8D6E63); // 辅助色
-  static const Color energyOrange = Color(0xFFEF6C00); // 点缀色
-  static const Color paperIvory = Color(0xFFFFF8E1); // 背景
-  static const Color textDark = Color(0xFF333333); // 文字
+  static const Color honeyGold = Color(0xFFF8C91C);
+  static const Color hiveBrown = Color(0xFF8D6E63);
+  static const Color energyOrange = Color(0xFFEF6C00);
+  static const Color paperIvory = Color(0xFFF2F2F7);
+  static const Color textDark = Color(0xFF1C1C1E);
+  static const Color honeyGoldDark = honeyGold;
+  static const Color hiveBrownDark = hiveBrown;
+  static const Color energyOrangeDark = energyOrange;
+  static const Color systemBlue = Color(0xFF0066CC);
 
-  // Brand colors - Dark Mode ⭐ 改为与亮色模式相同（不减弱）
-  static const Color honeyGoldDark = honeyGold; // 主色（暗黑模式 - 使用亮色）
-  static const Color hiveBrownDark = hiveBrown; // 辅助色（暗黑模式 - 使用亮色）
-  static const Color energyOrangeDark = energyOrange; // 点缀色（暗黑模式 - 使用亮色）
+  static ThemeData lightTheme({TargetPlatform? platform}) =>
+      _build(Brightness.light, platform);
+  static ThemeData darkTheme({TargetPlatform? platform}) =>
+      _build(Brightness.dark, platform);
 
-  static ThemeData lightTheme({TargetPlatform? platform}) {
-    final base = ThemeData.light();
+  static ThemeData _build(Brightness brightness, TargetPlatform? platform) {
+    final dark = brightness == Brightness.dark;
     final pf = platform ?? defaultTargetPlatform;
-    final isIOS = pf == TargetPlatform.iOS || pf == TargetPlatform.macOS;
-    final adjustedTextTheme =
-        BeeTypography.buildBase(base.textTheme, isIOS: isIOS)
-            .apply(bodyColor: textDark, displayColor: textDark);
-
-    return base.copyWith(
-      colorScheme: base.colorScheme.copyWith(
-        primary: honeyGold,
-        secondary: energyOrange,
-        surface: Colors.white,
+    final surface = dark ? const Color(0xFF1C1C1E) : Colors.white;
+    final foreground = dark ? Colors.white : textDark;
+    final accent = dark ? const Color(0xFF64ACFF) : systemBlue;
+    final secondaryText =
+        dark ? const Color(0xFFAEAEB2) : const Color(0xFF636366);
+    final separator = dark ? const Color(0xFF38383A) : const Color(0xFFE5E5EA);
+    final shape =
+        RoundedRectangleBorder(borderRadius: BorderRadius.circular(20));
+    final base = ThemeData(
+      useMaterial3: true,
+      platform: pf,
+      brightness: brightness,
+      colorScheme:
+          ColorScheme.fromSeed(seedColor: accent, brightness: brightness)
+              .copyWith(
+        primary: accent,
+        onPrimary: dark ? Colors.black : Colors.white,
+        secondary: accent,
+        surface: surface,
+        onSurface: foreground,
+        onSurfaceVariant: secondaryText,
+        outlineVariant: separator,
       ),
-      primaryColor: honeyGold,
-      scaffoldBackgroundColor: paperIvory,
-      appBarTheme: const AppBarTheme(
-        backgroundColor: Colors.white,
-        foregroundColor: textDark,
-        elevation: 0.0,
-        centerTitle: true,
-      ),
-      floatingActionButtonTheme: const FloatingActionButtonThemeData(
-        backgroundColor: honeyGold,
-        foregroundColor: Colors.white,
-      ),
-      bottomNavigationBarTheme: BottomNavigationBarThemeData(
-        selectedItemColor: energyOrange,
-        unselectedItemColor: Colors.grey,
-        showUnselectedLabels: true,
-        backgroundColor: Colors.transparent, // 悬浮胶囊样式，外层透明
-        elevation: 0,
-      ),
-      textTheme: adjustedTextTheme,
     );
-  }
-
-  static ThemeData darkTheme({TargetPlatform? platform}) {
-    final base = ThemeData.dark();
-    final pf = platform ?? defaultTargetPlatform;
-    final isIOS = pf == TargetPlatform.iOS || pf == TargetPlatform.macOS;
-    final adjusted = BeeTypography.buildBase(base.textTheme, isIOS: isIOS)
-        .apply(bodyColor: Colors.white, displayColor: Colors.white);
-
+    final typography = BeeTypography.buildBase(base.textTheme,
+            isIOS: pf == TargetPlatform.iOS || pf == TargetPlatform.macOS)
+        .apply(bodyColor: foreground, displayColor: foreground);
     return base.copyWith(
-      brightness: Brightness.dark,
-      colorScheme: base.colorScheme.copyWith(
-        brightness: Brightness.dark,
-        primary: honeyGoldDark,              // ⭐ 主色
-        onPrimary: Colors.black,             // ⭐ 主色上的前景色
-        primaryContainer: honeyGoldDark,     // ⭐ Switch thumb 等组件使用
-        onPrimaryContainer: Colors.black,    // ⭐ primaryContainer 上的前景色
-        secondary: energyOrangeDark,         // ⭐ 辅助色
-        surface: Colors.black,               // ⭐ 改为纯黑
-        onSurface: Colors.white,
+      primaryColor: accent,
+      scaffoldBackgroundColor: dark ? Colors.black : paperIvory,
+      textTheme: typography,
+      dividerColor: separator,
+      appBarTheme: AppBarTheme(
+        backgroundColor: dark ? Colors.black : paperIvory,
+        foregroundColor: foreground,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        centerTitle: false,
+        titleTextStyle: typography.titleLarge,
       ),
-      primaryColor: honeyGoldDark,     // ⭐ 主题色
-      scaffoldBackgroundColor: Colors.black, // ⭐ 纯黑背景（OLED 友好）
-      appBarTheme: const AppBarTheme(
-        backgroundColor: Colors.black,  // ⭐ 改为纯黑
-        foregroundColor: Colors.white,
-        elevation: 0.0,
-        centerTitle: true,
-        iconTheme: IconThemeData(color: Colors.white),
+      cardTheme: CardThemeData(
+          color: surface,
+          elevation: 0,
+          margin: EdgeInsets.zero,
+          shape: shape,
+          clipBehavior: Clip.antiAlias),
+      dividerTheme:
+          DividerThemeData(color: separator, thickness: 0.5, space: 1),
+      listTileTheme: ListTileThemeData(
+          minTileHeight: 52,
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          iconColor: accent,
+          textColor: foreground),
+      iconTheme: IconThemeData(color: foreground, size: 22),
+      iconButtonTheme: IconButtonThemeData(
+          style: IconButton.styleFrom(
+              minimumSize: const Size(48, 48), foregroundColor: accent)),
+      filledButtonTheme: FilledButtonThemeData(
+          style: FilledButton.styleFrom(
+              minimumSize: const Size(48, 48),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)))),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+              elevation: 0,
+              minimumSize: const Size(48, 48),
+              backgroundColor: accent,
+              foregroundColor: dark ? Colors.black : Colors.white,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)))),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: dark ? const Color(0xFF2C2C2E) : const Color(0xFFF2F2F7),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none),
+        focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: accent, width: 2)),
       ),
-      floatingActionButtonTheme: const FloatingActionButtonThemeData(
-        backgroundColor: honeyGoldDark,  // ⭐ 深金色
-        foregroundColor: Colors.black,   // 黑色文字（对比度更好）
-      ),
+      bottomSheetTheme: BottomSheetThemeData(
+          backgroundColor: surface,
+          showDragHandle: true,
+          shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)))),
+      dialogTheme:
+          DialogThemeData(backgroundColor: surface, elevation: 0, shape: shape),
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+          elevation: 0,
+          backgroundColor: accent,
+          foregroundColor: dark ? Colors.black : Colors.white),
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
-        selectedItemColor: honeyGoldDark, // ⭐ 深金色
-        unselectedItemColor: Colors.grey,
-        showUnselectedLabels: true,
-        backgroundColor: Colors.transparent, // 悬浮胶囊样式，外层透明
-        elevation: 0,
-      ),
-      cardTheme: CardTheme(
-        color: Colors.black,             // ⭐ 改为纯黑卡片
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-          side: BorderSide(
-            color: Colors.white.withValues(alpha: 0.1), // ⭐ 白色边框
-            width: 1,
-          ),
-        ),
-      ),
-      dividerTheme: DividerThemeData(
-        color: Colors.white.withValues(alpha: 0.12), // ⭐ 白色分割线
-        thickness: 1,
-      ),
-      iconTheme: const IconThemeData(
-        color: Colors.white,
-      ),
-      textTheme: adjusted,
+          selectedItemColor: accent,
+          unselectedItemColor: secondaryText,
+          backgroundColor: surface,
+          elevation: 0,
+          showUnselectedLabels: true),
     );
   }
 }

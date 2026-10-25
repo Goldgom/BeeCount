@@ -11,6 +11,7 @@ import '../../l10n/app_localizations.dart';
 import '../../utils/notification_factory.dart';
 import '../../utils/notification_android.dart';
 import 'ios_auto_billing_page.dart';
+import 'notification_capture_page.dart';
 
 /// 自动记账设置页面（根据平台路由）
 class AutoBillingSettingsPage extends StatelessWidget {
@@ -178,6 +179,18 @@ class _AndroidAutoBillingPageState extends ConsumerState<AndroidAutoBillingPage>
             child: ListView(
               padding: const EdgeInsets.all(16),
               children: [
+                Card(
+                  child: ListTile(
+                    leading: const Icon(Icons.receipt_long_outlined),
+                    title: const Text('支出通知采集（无需 AI）'),
+                    subtitle: const Text('本地解析微信、支付宝和银行通知，人工核对后入账'),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
+                      builder: (_) => const NotificationCapturePage(),
+                    )),
+                  ),
+                ),
+                const SizedBox(height: 16),
                 // 功能说明卡片
                 _buildInfoCard(
                   context,

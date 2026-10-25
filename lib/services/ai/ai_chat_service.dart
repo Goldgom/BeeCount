@@ -1,3 +1,4 @@
+import 'dart:convert';
 import '../../ai/core/bill_info.dart';
 import '../../ai/providers/ai_provider_config.dart';
 import '../../ai/providers/ai_provider_factory.dart';
@@ -7,6 +8,7 @@ import '../../l10n/app_localizations.dart';
 import '../data/tag_seed_service.dart';
 import '../system/logger_service.dart';
 import 'ai_bookkeeper.dart';
+import 'bookkeeping_ai_tool.dart';
 
 /// AI 对话服务
 ///
@@ -19,14 +21,109 @@ import 'ai_bookkeeper.dart';
 class AIChatService {
   final BaseRepository _repo;
   final AiBookkeeper _bookkeeper;
+  /// 可选的通用记账工具。传入后可供模型 function/tool calling 调用。
+  /// Tool calling adapter for bookkeeping operations.
+  final BookkeepingAiTool? _bookkeepingTool;
 
   AIChatService({
     required BaseRepository repo,
     required AiBookkeeper bookkeeper,
+    BookkeepingAiTool? bookkeepingTool,
   })  : _repo = repo,
-        _bookkeeper = bookkeeper;
+        _bookkeeper = bookkeeper,
+        _bookkeepingTool = bookkeepingTool ?? DefaultBookkeepingAiTool(repository: repo);
+
+  Map<String, dynamic> get bookkeepingToolDefinition => {
+        'type': 'function',
+        'function': {
+          'name': _bookkeepingTool!.name,
+          'description': _bookkeepingTool.description,
+          'parameters': _bookkeepingTool.parametersSchema,
+        },
+      };
+
+  List<Map<String, dynamic>> get toolDefinitions => [bookkeepingToolDefinition];
+
+  Future<Map<String, dynamic>> executeBookkeepingTool(
+    Map<String, dynamic> arguments,
+  ) async {
+    final result = await _bookkeepingTool!.execute(arguments);
+    return result.toJson();
+  }
+
+  Future<Map<String, dynamic>> executeBookkeepingToolJson(String jsonArguments) async {
+    try {
+      final decoded = jsonDecode(jsonArguments);
+      if (decoded is! Map) return BookkeepingToolResult.failure('tool 参数必须是 JSON 对象').toJson();
+      return executeBookkeepingTool(Map<String, dynamic>.from(decoded));
+    } on FormatException {
+      return BookkeepingToolResult.failure('tool 参数不是合法 JSON').toJson();
+    }
+  }
+
+  Future<Map<String, dynamic>> executeToolCall(Map<String, dynamic> call) async {
+    final function = call['function'];
+    final name = call['name']?.toString() ?? (function is Map ? function['name']?.toString() : null);
+    if (name != _bookkeepingTool!.name) return BookkeepingToolResult.failure('未知工具: ${name ?? ''}').toJson();
+    final raw = call['arguments'] ?? (function is Map ? function['arguments'] : null);
+    if (raw is String) return executeBookkeepingToolJson(raw);
+    if (raw is Map) return executeBookkeepingTool(Map<String, dynamic>.from(raw));
+    return BookkeepingToolResult.failure('tool call 缺少 arguments').toJson();
+  }
+
+  /*
+
+  /// 返回 OpenAI/兼容服务商可用的工具定义。
+  Map<String, dynamic> get bookkeepingToolDefinition => {
+        'type': 'function',
+        'function': {
+          'name': _bookkeepingTool!.name,
+          'description': _bookkeepingTool.description,
+          'parameters': _bookkeepingTool.parametersSchema,
+        },
+      };
+
+  /// 当前会话可注册的工具列表（便于直接填入 chat completions 的 `tools` 字段）。
+  List<Map<String, dynamic>> get toolDefinitions => [bookkeepingToolDefinition];
+
+  /// 执行模型返回的 tool call 参数。参数必须是 JSON object，结果同样为结构化 JSON。
+  Future<Map<String, dynamic>> executeBookkeepingTool(
+    Map<String, dynamic> arguments,
+  ) async {
+    final result = await _bookkeepingTool!.execute(arguments);
+    return result.toJson();
+  }
+
+  /// 兼容模型 tool-call 返回的 JSON 字符串参数。
+  Future<Map<String, dynamic>> executeBookkeepingToolJson(String jsonArguments) async {
+    try {
+      final decoded = jsonDecode(jsonArguments);
+      if (decoded is! Map) {
+        return BookkeepingToolResult.failure('tool 参数必须是 JSON 对象').toJson();
+      }
+      return executeBookkeepingTool(Map<String, dynamic>.from(decoded));
+    } on FormatException {
+      return BookkeepingToolResult.failure('tool 参数不是合法 JSON').toJson();
+    }
+  }
+
+  /// 执行标准 OpenAI 风格的 tool call：
+  /// `{name: 'bookkeeping', arguments: {...}}`。
+  Future<Map<String, dynamic>> executeToolCall(Map<String, dynamic> call) async {
+    final name = call['name']?.toString() ??
+        (call['function'] is Map ? (call['function'] as Map)['name']?.toString() : null);
+    if (name != _bookkeepingTool!.name) {
+      return BookkeepingToolResult.failure('未知工具: ${name ?? ''}').toJson();
+    }
+    final raw = call['arguments'] ??
+        (call['function'] is Map ? (call['function'] as Map)['arguments'] : null);
+    if (raw is String) return executeBookkeepingToolJson(raw);
+    if (raw is Map) return executeBookkeepingTool(Map<String, dynamic>.from(raw));
+    return BookkeepingToolResult.failure('tool call 缺少 arguments').toJson();
+  }
 
   /// 验证 AI 配置是否存在(仅本地配置,不发网络请求)
+  */
   static Future<AIConfigValidationResult> validateApiKey() async {
     final config = await AIProviderManager.getProviderForCapability(
       AICapabilityType.text,
@@ -104,6 +201,12 @@ class AIChatService {
     );
 
     if (!result.success) {
+      if (result.hasDuplicates) {
+        return AIResponse.text(
+          '检测到疑似重复记账，已跳过 ${result.duplicateCount} 笔。'
+          '已有交易 ID：${result.duplicateTransactionIds.join(', ')}',
+        );
+      }
       logger.warning('AIChat', '账单提取失败或全部无有效金额');
       return AIResponse.text(
         '抱歉,未识别到完整的记账信息。\n\n'
@@ -115,14 +218,22 @@ class AIChatService {
     }
 
     logger.info('AIChat', '账单提取成功: ${result.savedCount} 笔');
+    final duplicateHint = result.hasDuplicates
+        ? '检测到疑似重复记账，已跳过 ${result.duplicateCount} 笔。'
+        : null;
+    final rateHint = (result.unconvertedCurrencies.isEmpty || l10n == null)
+        ? null
+        : l10n.aiBillingRateMissingHint(
+            result.unconvertedCurrencies.join('、'));
+    final hints = [
+      if (duplicateHint != null) duplicateHint,
+      if (rateHint != null) rateHint,
+    ].join('\n');
     return AIResponse.billCards(
       result.savedBills,
       result.transactionIds,
       // 多币种降级提示(A5):缺汇率时已按 1:1 暂记,告诉用户去统计页补折算
-      note: (result.unconvertedCurrencies.isEmpty || l10n == null)
-          ? null
-          : l10n.aiBillingRateMissingHint(
-              result.unconvertedCurrencies.join('、')),
+      note: hints.isEmpty ? null : hints,
     );
   }
 

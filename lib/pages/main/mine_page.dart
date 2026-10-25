@@ -121,6 +121,8 @@ class MinePage extends ConsumerWidget {
                                             cloudVersion.isNotEmpty
                                         ? 'BeeCount Cloud v$cloudVersion'
                                         : 'BeeCount Cloud';
+                                  case CloudBackendType.sftp:
+                                    return 'SFTP';
                                 }
                               },
                             ),

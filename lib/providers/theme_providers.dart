@@ -46,7 +46,7 @@ final themeModeInitProvider = FutureProvider<void>((ref) async {
 });
 
 // 可变主色（个性化换装使用）
-final primaryColorProvider = StateProvider<Color>((ref) => BeeTheme.honeyGold);
+final primaryColorProvider = StateProvider<Color>((ref) => BeeTheme.systemBlue);
 
 // 是否隐藏金额显示
 final hideAmountsProvider = StateProvider<bool>((ref) => false);
@@ -81,7 +81,10 @@ final primaryColorInitProvider = FutureProvider<void>((ref) async {
 Future<void> _persistAndPushPrimary(
     Ref ref, SharedPreferences prefs, Color next, bool fromServer) async {
   {
-    final colorValue = (next.a * 255).toInt() << 24 | (next.r * 255).toInt() << 16 | (next.g * 255).toInt() << 8 | (next.b * 255).toInt();
+    final colorValue = (next.a * 255).toInt() << 24 |
+        (next.r * 255).toInt() << 16 |
+        (next.g * 255).toInt() << 8 |
+        (next.b * 255).toInt();
     await prefs.setInt('primaryColor', colorValue);
     // Update widget with new theme color
     try {
@@ -490,7 +493,7 @@ final headerSkinInitProvider = FutureProvider<void>((ref) async {
 /// 选中绑定色皮肤时不覆盖它,换回普通皮肤时用它恢复,
 /// 用户就不会因为试了一款秋日皮肤而丢掉自己调的颜色。
 final userChosenPrimaryProvider =
-    StateProvider<Color>((ref) => BeeTheme.honeyGold);
+    StateProvider<Color>((ref) => BeeTheme.systemBlue);
 
 int _colorToInt(Color c) =>
     (c.a * 255).toInt() << 24 |
@@ -673,8 +676,8 @@ void _pushDisplayNameToCloud(Ref ref, String name) {
       await cloudProvider.updateMyProfileDisplayName(displayName: trimmed);
       logger.info('theme_providers', 'display name pushed to server: $trimmed');
     } catch (e, st) {
-      logger.warning('theme_providers',
-          'push display name failed (non-blocking): $e', st);
+      logger.warning(
+          'theme_providers', 'push display name failed (non-blocking): $e', st);
     }
   }());
 }

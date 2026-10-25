@@ -170,10 +170,10 @@
   "@searchBatchModeWithCount": {
     "placeholders": {
       "selected": {
-        "type": "int"
+        "type": "Object"
       },
       "total": {
-        "type": "int"
+        "type": "Object"
       }
     }
   },
@@ -184,7 +184,7 @@
   "@searchSelectedCount": {
     "placeholders": {
       "count": {
-        "type": "int"
+        "type": "Object"
       }
     }
   },
@@ -195,7 +195,7 @@
   "@searchBatchDeleteConfirmMessage": {
     "placeholders": {
       "count": {
-        "type": "int"
+        "type": "Object"
       }
     }
   },
@@ -204,7 +204,7 @@
   "@searchBatchSetNoteMessage": {
     "placeholders": {
       "count": {
-        "type": "int"
+        "type": "Object"
       }
     }
   },
@@ -213,7 +213,7 @@
   "@searchBatchDeleteSuccess": {
     "placeholders": {
       "count": {
-        "type": "int"
+        "type": "Object"
       }
     }
   },
@@ -221,7 +221,7 @@
   "@searchBatchDeleteFailed": {
     "placeholders": {
       "error": {
-        "type": "String"
+        "type": "Object"
       }
     }
   },
@@ -229,7 +229,7 @@
   "@searchBatchSetNoteSuccess": {
     "placeholders": {
       "count": {
-        "type": "int"
+        "type": "Object"
       }
     }
   },
@@ -237,7 +237,7 @@
   "@searchBatchSetNoteFailed": {
     "placeholders": {
       "error": {
-        "type": "String"
+        "type": "Object"
       }
     }
   },
@@ -245,7 +245,7 @@
   "@searchBatchChangeCategorySuccess": {
     "placeholders": {
       "count": {
-        "type": "int"
+        "type": "Object"
       }
     }
   },
@@ -253,7 +253,7 @@
   "@searchBatchChangeCategoryFailed": {
     "placeholders": {
       "error": {
-        "type": "String"
+        "type": "Object"
       }
     }
   },
@@ -261,7 +261,7 @@
   "@searchResultsCount": {
     "placeholders": {
       "count": {
-        "type": "int"
+        "type": "Object"
       }
     }
   },
@@ -312,7 +312,7 @@
   "@ledgersClearMessage": {
     "placeholders": {
       "name": {
-        "type": "String"
+        "type": "Object"
       }
     }
   },
@@ -323,7 +323,7 @@
   "@ledgersDeleteLocalMessage": {
     "placeholders": {
       "name": {
-        "type": "String"
+        "type": "Object"
       }
     }
   },
@@ -728,7 +728,7 @@
   "@categoryClearUnusedMessage": {
     "placeholders": {
       "count": {
-        "type": "int"
+        "type": "Object"
       }
     }
   },
@@ -738,7 +738,7 @@
   "@categoryClearUnusedSuccess": {
     "placeholders": {
       "count": {
-        "type": "int"
+        "type": "Object"
       }
     }
   },
@@ -751,7 +751,7 @@
   "@categoryShareSuccess": {
     "placeholders": {
       "path": {
-        "type": "String"
+        "type": "Object"
       }
     }
   },
@@ -1091,6 +1091,17 @@
   "exportDescription": "支持导出的数据类型：\n• 交易记录（收入/支出/转账）\n• 分类信息\n• 账户信息\n\n点击下方按钮选择保存位置，开始导出当前账本为 CSV 文件。",
   "exportButtonIOS": "导出并分享",
   "exportButtonAndroid": "导出数据",
+  "sftpUploadTitle": "SFTP 云盘",
+  "sftpUploadHint": "使用 SFTP 服务器作为云盘保存账本数据。",
+  "sftpHost": "服务器地址",
+  "sftpPort": "端口",
+  "sftpUsername": "用户名",
+  "sftpPassword": "密码",
+  "sftpRemoteDirectory": "远程目录",
+  "sftpUploadButton": "导出并上传",
+  "sftpInvalidConfig": "请填写正确的 SFTP 配置",
+  "sftpUploadedTo": "已上传到：{path}",
+  "@sftpUploadedTo": {"placeholders": {"path": {"type": "String"}}},
   "exportSavedTo": "已保存到：{path}",
   "exportCsvHeaderType": "类型",
   "exportCsvHeaderCategory": "分类",

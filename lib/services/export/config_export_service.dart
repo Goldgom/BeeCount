@@ -79,6 +79,7 @@ class ExportOptions {
 class AppConfig {
   final SupabaseConfig? supabase;
   final WebdavConfig? webdav;
+  final SftpConfig? sftp;
   final S3Config? s3;
   final BeeCountCloudConfig? beecountCloud;
   final AIConfig? ai;
@@ -93,6 +94,7 @@ class AppConfig {
   const AppConfig({
     this.supabase,
     this.webdav,
+    this.sftp,
     this.s3,
     this.beecountCloud,
     this.ai,
@@ -118,6 +120,10 @@ class AppConfig {
 
     if (webdav != null) {
       map['webdav'] = webdav!.toMap();
+    }
+
+    if (sftp != null) {
+      map['sftp'] = sftp!.toMap();
     }
 
     if (s3 != null) {
@@ -168,6 +174,10 @@ class AppConfig {
       webdav: yaml.containsKey('webdav')
           ? WebdavConfig.fromMap(
               Map<String, dynamic>.from(yaml['webdav'] as Map))
+          : null,
+      sftp: yaml.containsKey('sftp')
+          ? SftpConfig.fromMap(
+              Map<String, dynamic>.from(yaml['sftp'] as Map))
           : null,
       s3: yaml.containsKey('s3')
           ? S3Config.fromMap(
@@ -333,6 +343,40 @@ class WebdavConfig {
 
   static WebdavConfig fromMap(Map<String, dynamic> map) => WebdavConfig(
         url: map['url'] as String,
+        username: map['username'] as String,
+        password: map['password'] as String,
+        remotePath: map['remote_path'] as String?,
+      );
+}
+
+/// SFTP 云盘配置
+class SftpConfig {
+  final String host;
+  final int port;
+  final String username;
+  final String password;
+  final String? remotePath;
+
+  const SftpConfig({
+    required this.host,
+    this.port = 22,
+    required this.username,
+    required this.password,
+    this.remotePath,
+  });
+
+  Map<String, dynamic> toMap() => {
+        'host': host,
+        'port': port,
+        'username': username,
+        'password': password,
+        if (remotePath != null && remotePath!.isNotEmpty)
+          'remote_path': remotePath,
+      };
+
+  static SftpConfig fromMap(Map<String, dynamic> map) => SftpConfig(
+        host: map['host'] as String,
+        port: (map['port'] as num?)?.toInt() ?? 22,
         username: map['username'] as String,
         password: map['password'] as String,
         remotePath: map['remote_path'] as String?,
@@ -1283,6 +1327,28 @@ class ConfigExportService {
       }
     }
 
+    // 读取 SFTP 配置
+    SftpConfig? sftpConfig;
+    final sftpCfgRaw = prefs.getString('cloud_sftp_cfg');
+    if (sftpCfgRaw != null) {
+      try {
+        final cfg = decodeCloudConfig(sftpCfgRaw);
+        if (cfg.sftpHost != null &&
+            cfg.sftpUsername != null &&
+            cfg.sftpPassword != null) {
+          sftpConfig = SftpConfig(
+            host: cfg.sftpHost!,
+            port: cfg.sftpPort ?? 22,
+            username: cfg.sftpUsername!,
+            password: cfg.sftpPassword!,
+            remotePath: cfg.sftpRemotePath,
+          );
+        }
+      } catch (e) {
+        logger.warning('ConfigExport', '读取 SFTP 配置失败: $e');
+      }
+    }
+
     // 读取S3配置
     S3Config? s3Config;
     final s3CfgRaw = prefs.getString('cloud_s3_cfg');
@@ -1712,6 +1778,7 @@ class ConfigExportService {
     // 根据选项过滤云服务和AI配置
     final exportSupabase = options.appSettings ? supabaseConfig : null;
     final exportWebdav = options.appSettings ? webdavConfig : null;
+    final exportSftp = options.appSettings ? sftpConfig : null;
     final exportS3 = options.appSettings ? s3Config : null;
     final exportBeecountCloud =
         options.appSettings ? beecountCloudConfig : null;
@@ -1726,6 +1793,7 @@ class ConfigExportService {
     final config = AppConfig(
       supabase: exportSupabase,
       webdav: exportWebdav,
+      sftp: exportSftp,
       s3: exportS3,
       beecountCloud: exportBeecountCloud,
       ai: exportAi,
@@ -1793,6 +1861,19 @@ class ConfigExportService {
       }
       if (s3.containsKey('port')) {
         buffer.writeln('  port: ${s3['port']}');
+      }
+      buffer.writeln();
+    }
+
+    if (yamlMap.containsKey('sftp')) {
+      buffer.writeln('sftp:');
+      final sftp = yamlMap['sftp'] as Map<String, dynamic>;
+      buffer.writeln('  host: "${sftp['host']}"');
+      buffer.writeln('  port: ${sftp['port']}');
+      buffer.writeln('  username: "${sftp['username']}"');
+      buffer.writeln('  password: "${sftp['password']}"');
+      if (sftp.containsKey('remote_path')) {
+        buffer.writeln('  remote_path: "${sftp['remote_path']}"');
       }
       buffer.writeln();
     }
@@ -2254,6 +2335,21 @@ class ConfigExportService {
       );
       await prefs.setString('cloud_webdav_cfg', encodeCloudConfig(webdavCfg));
       logger.info('ConfigImport', 'WebDAV配置已导入');
+    }
+
+    // 导入 SFTP 配置
+    if (options.appSettings && config.sftp != null) {
+      final sftpCfg = CloudServiceConfig(
+        type: CloudBackendType.sftp,
+        name: 'SFTP',
+        sftpHost: config.sftp!.host,
+        sftpPort: config.sftp!.port,
+        sftpUsername: config.sftp!.username,
+        sftpPassword: config.sftp!.password,
+        sftpRemotePath: config.sftp!.remotePath,
+      );
+      await prefs.setString('cloud_sftp_cfg', encodeCloudConfig(sftpCfg));
+      logger.info('ConfigImport', 'SFTP 配置已导入');
     }
 
     // 导入S3配置
